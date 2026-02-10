@@ -104,7 +104,7 @@ export default function ResumePage() {
               </h3>
               <div className="flex flex-wrap gap-2">
                 {['Python', 'Pandas', 'Scikit-learn', 'TensorFlow', 'SQL', 'NumPy'].map(skill => (
-                  <Badge key={skill} variant="secondary">{skill}</Badge>
+                  <Badge key={skill} variant="default">{skill}</Badge>
                 ))}
               </div>
             </Card>
