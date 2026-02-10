@@ -129,15 +129,31 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Chat API error:", error);
 
-    // Check for specific Groq errors
+    // Check for specific errors
     if (error instanceof Error) {
+      // API key not configured
+      if (error.message.includes("GROQ_API_KEY")) {
+        console.error("GROQ_API_KEY is not set in environment variables");
+        return NextResponse.json(
+          {
+            error:
+              "Chat service is not configured. Please contact the administrator.",
+          },
+          { status: 503 },
+        );
+      }
+
       if (error.message.includes("rate_limit")) {
         return NextResponse.json(
           { error: "API rate limit exceeded. Please try again later." },
           { status: 429 },
         );
       }
-      if (error.message.includes("invalid_api_key")) {
+      if (
+        error.message.includes("invalid_api_key") ||
+        error.message.includes("Incorrect API")
+      ) {
+        console.error("Invalid GROQ API key");
         return NextResponse.json(
           { error: "Service configuration error. Please contact support." },
           { status: 500 },

@@ -5,11 +5,30 @@
 
 import Groq from "groq-sdk";
 
-// Initialize Groq client
-// The API key should be set in environment variable: GROQ_API_KEY
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// Lazy initialization to ensure env vars are available at runtime
+let groqClient: Groq | null = null;
+
+export function getGroqClient(): Groq {
+  if (!groqClient) {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("GROQ_API_KEY environment variable is not set");
+    }
+
+    groqClient = new Groq({
+      apiKey: apiKey,
+    });
+  }
+  return groqClient;
+}
+
+// For backward compatibility - but prefer getGroqClient()
+const groq = {
+  get chat() {
+    return getGroqClient().chat;
+  },
+};
 
 export default groq;
 

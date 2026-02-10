@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove 'output: export' to enable API routes
+  // API routes require server-side rendering
   trailingSlash: true,
   images: {
     unoptimized: true
