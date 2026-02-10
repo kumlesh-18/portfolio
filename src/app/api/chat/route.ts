@@ -90,11 +90,13 @@ export async function POST(request: NextRequest) {
     ];
 
     // Create streaming response
+    // Temperature 0.8 encourages creative synthesis over copying
     const stream = await groq.chat.completions.create({
       model: DEFAULT_MODEL,
       messages,
       max_tokens: RATE_LIMIT.maxTokensPerRequest,
-      temperature: 0.7,
+      temperature: 0.8,
+      top_p: 0.9,
       stream: true,
     });
 

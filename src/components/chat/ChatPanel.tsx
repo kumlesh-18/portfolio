@@ -1,32 +1,184 @@
 /**
  * CHAT PANEL COMPONENT
- * Main chat window with messages and input
+ * Enterprise-grade chat window with message grouping, scroll shadows,
+ * typing indicators, and full accessibility support.
  */
 
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { X, Minimize2, MessageCircle, Sparkles } from 'lucide-react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { X, Minus, Bot, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ChatMessage } from './ChatMessage';
+import { ChatMessage, shouldGroupMessages } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const SUGGESTED_QUESTIONS = [
+  "What makes Kumlesh a good fit for ML roles?",
+  "Walk me through his most impactful project",
+  "How do his skills connect across projects?",
+  "What problems can he help solve?",
+] as const;
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
 interface ChatPanelProps {
+  /** Array of chat messages */
   messages: ChatMessageType[];
+  /** Whether AI is currently generating a response */
   isLoading: boolean;
+  /** Error message if any */
   error: string | null;
+  /** Callback to send a message */
   onSendMessage: (message: string) => void;
+  /** Callback to close the panel */
   onClose: () => void;
+  /** Callback to minimize the panel */
   onMinimize: () => void;
 }
 
-const SUGGESTED_QUESTIONS = [
-  "What projects has Kumlesh worked on?",
-  "Tell me about his ML skills",
-  "What's his experience with Python?",
-  "How can I contact Kumlesh?",
-];
+// =============================================================================
+// SUBCOMPONENTS
+// =============================================================================
+
+interface TypingIndicatorProps {
+  className?: string;
+}
+
+function TypingIndicator({ className }: TypingIndicatorProps) {
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-3 mt-4',
+        className
+      )}
+      role="status"
+      aria-label="AI is reasoning"
+    >
+      {/* Avatar */}
+      <div
+        className={cn(
+          'flex-shrink-0 w-8 h-8 rounded-full',
+          'flex items-center justify-center',
+          'bg-[var(--surface-raised)] border border-[var(--border-default)]',
+          'text-[var(--text-secondary)]'
+        )}
+        aria-hidden="true"
+      >
+        <Bot className="w-4 h-4" />
+      </div>
+      
+      {/* Typing dots */}
+      <div
+        className={cn(
+          'inline-flex items-center gap-1 px-4 py-3',
+          'bg-[var(--chat-assistant-bg)] rounded-2xl rounded-bl-md'
+        )}
+      >
+        <span
+          className="typing-dot w-2 h-2 rounded-full bg-[var(--chat-typing-dot)]"
+          aria-hidden="true"
+        />
+        <span
+          className="typing-dot w-2 h-2 rounded-full bg-[var(--chat-typing-dot)]"
+          aria-hidden="true"
+        />
+        <span
+          className="typing-dot w-2 h-2 rounded-full bg-[var(--chat-typing-dot)]"
+          aria-hidden="true"
+        />
+        <span className="sr-only">Typing...</span>
+      </div>
+    </div>
+  );
+}
+
+interface EmptyStateProps {
+  onSelectQuestion: (question: string) => void;
+}
+
+function EmptyState({ onSelectQuestion }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+      {/* Icon */}
+      <div
+        className={cn(
+          'w-16 h-16 mb-4 rounded-2xl',
+          'bg-gradient-to-br from-[var(--interactive-primary)] to-[var(--interactive-primary-active)]',
+          'flex items-center justify-center',
+          'shadow-lg shadow-[var(--interactive-primary)]/20'
+        )}
+      >
+        <Sparkles className="w-8 h-8 text-white" aria-hidden="true" />
+      </div>
+      
+      {/* Title */}
+      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
+        Hi! I&apos;m the Portfolio AI
+      </h3>
+      
+      {/* Description */}
+      <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-[280px]">
+        I analyze and synthesize insights about Kumlesh&apos;s work. Ask me anything — I&apos;ll reason through it.
+      </p>
+      
+      {/* Suggested questions */}
+      <div className="w-full space-y-2" role="group" aria-label="Suggested questions">
+        <p className="text-xs font-medium text-[var(--text-tertiary)] mb-2">
+          Try asking
+        </p>
+        {SUGGESTED_QUESTIONS.map((question) => (
+          <button
+            key={question}
+            onClick={() => onSelectQuestion(question)}
+            className={cn(
+              'w-full text-left text-sm px-4 py-3',
+              'bg-[var(--surface-raised)] hover:bg-[var(--interactive-secondary-hover)]',
+              'border border-[var(--border-subtle)] hover:border-[var(--border-default)]',
+              'rounded-xl',
+              'transition-all duration-150',
+              'text-[var(--text-primary)]',
+              'chat-focus-ring'
+            )}
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface ErrorBannerProps {
+  message: string;
+  onDismiss?: () => void;
+}
+
+function ErrorBanner({ message }: ErrorBannerProps) {
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'mx-4 mb-4 px-4 py-3 rounded-xl',
+        'bg-[var(--feedback-error-light)] border border-[var(--feedback-error)]/20',
+        'text-sm text-[var(--feedback-error)]'
+      )}
+    >
+      <p className="font-medium">Something went wrong</p>
+      <p className="text-[var(--feedback-error)]/80 mt-0.5">{message}</p>
+    </div>
+  );
+}
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
 
 export function ChatPanel({
   messages,
@@ -36,116 +188,206 @@ export function ChatPanel({
   onClose,
   onMinimize,
 }: ChatPanelProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [hasScrollTop, setHasScrollTop] = useState(false);
+  const [hasScrollBottom, setHasScrollBottom] = useState(false);
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Process messages with grouping information
+  const processedMessages = useMemo(() => {
+    return messages.map((message, index) => {
+      const prevMessage = messages[index - 1];
+      const nextMessage = messages[index + 1];
+      
+      const isGrouped = shouldGroupMessages(message, prevMessage);
+      const isLastInGroup = !nextMessage || !shouldGroupMessages(nextMessage, message);
+      
+      return {
+        message,
+        isGrouped,
+        isLastInGroup,
+      };
+    });
   }, [messages]);
 
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+  // Update scroll shadow indicators
+  const updateScrollShadows = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const tolerance = 5;
+    
+    setHasScrollTop(scrollTop > tolerance);
+    setHasScrollBottom(scrollTop + clientHeight < scrollHeight - tolerance);
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    updateScrollShadows();
+    container.addEventListener('scroll', updateScrollShadows, { passive: true });
+    
+    // Also update on resize
+    const resizeObserver = new ResizeObserver(updateScrollShadows);
+    resizeObserver.observe(container);
+    
+    return () => {
+      container.removeEventListener('scroll', updateScrollShadows);
+      resizeObserver.disconnect();
+    };
+  }, [updateScrollShadows, messages]);
+
+  const hasMessages = messages.length > 0;
+
   return (
-    <div
+    <aside
       className={cn(
-        'flex flex-col w-[380px] h-[500px] max-h-[80vh]',
-        'bg-background border border-border rounded-2xl shadow-2xl',
+        'flex flex-col',
+        'w-[400px] max-w-[calc(100vw-2rem)]',
+        'h-[560px] max-h-[calc(100vh-8rem)]',
+        // Mobile full-width
+        'max-sm:w-full max-sm:h-[calc(100vh-5rem)] max-sm:max-h-none',
+        // Appearance
+        'bg-[var(--surface-overlay)]',
+        'border border-[var(--border-default)]',
+        'rounded-2xl',
+        'shadow-2xl shadow-black/10',
         'overflow-hidden',
-        // Mobile responsiveness
-        'max-w-[calc(100vw-32px)] max-sm:w-full max-sm:h-[70vh]'
+        // Animation
+        'chat-panel-enter'
       )}
+      role="dialog"
+      aria-label="Chat with Portfolio AI"
+      aria-modal="false"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-primary" />
+      <header
+        className={cn(
+          'flex items-center justify-between',
+          'px-4 py-3',
+          'border-b border-[var(--border-default)]',
+          'bg-[var(--surface-base)]'
+        )}
+      >
+        <div className="flex items-center gap-3">
+          {/* Status indicator */}
+          <div
+            className={cn(
+              'relative w-10 h-10 rounded-xl',
+              'bg-gradient-to-br from-[var(--interactive-primary)] to-[var(--interactive-primary-active)]',
+              'flex items-center justify-center',
+              'shadow-md shadow-[var(--interactive-primary)]/20'
+            )}
+          >
+            <Bot className="w-5 h-5 text-white" aria-hidden="true" />
+            {/* Online indicator */}
+            <span
+              className={cn(
+                'absolute -bottom-0.5 -right-0.5',
+                'w-3 h-3 rounded-full',
+                'bg-[var(--feedback-success)]',
+                'border-2 border-[var(--surface-base)]'
+              )}
+              aria-hidden="true"
+            />
           </div>
+          
           <div>
-            <h3 className="font-semibold text-sm">Portfolio Assistant</h3>
-            <p className="text-xs text-muted-foreground">Ask me anything</p>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              Portfolio AI
+            </h2>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              {isLoading ? 'Reasoning...' : 'Ready'}
+            </p>
           </div>
         </div>
+        
+        {/* Actions */}
         <div className="flex items-center gap-1">
           <button
             onClick={onMinimize}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className={cn(
+              'w-9 h-9 rounded-lg',
+              'flex items-center justify-center',
+              'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]',
+              'hover:bg-[var(--interactive-secondary)]',
+              'transition-colors duration-150',
+              'chat-focus-ring'
+            )}
             aria-label="Minimize chat"
           >
-            <Minimize2 className="w-4 h-4 text-muted-foreground" />
+            <Minus className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className={cn(
+              'w-9 h-9 rounded-lg',
+              'flex items-center justify-center',
+              'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]',
+              'hover:bg-[var(--interactive-secondary)]',
+              'transition-colors duration-150',
+              'chat-focus-ring'
+            )}
             aria-label="Close chat"
           >
-            <X className="w-4 h-4 text-muted-foreground" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <MessageCircle className="w-8 h-8 text-primary" />
-            </div>
-            <h4 className="font-semibold mb-2">Hi! I'm Kumlesh's AI Assistant</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              I know everything about his projects, skills, and experience. Ask me anything!
-            </p>
-            
-            {/* Suggested Questions */}
-            <div className="w-full space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">
-                Try asking:
-              </p>
-              {SUGGESTED_QUESTIONS.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => onSendMessage(question)}
-                  className={cn(
-                    'w-full text-left text-sm px-3 py-2 rounded-lg',
-                    'bg-muted/50 hover:bg-muted transition-colors',
-                    'text-foreground'
-                  )}
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Messages area */}
+      <div
+        ref={scrollContainerRef}
+        className={cn(
+          'flex-1 overflow-y-auto',
+          'chat-scrollbar chat-scroll-container',
+          hasScrollTop && 'has-scroll-top',
+          hasScrollBottom && 'has-scroll-bottom'
+        )}
+      >
+        {!hasMessages ? (
+          <EmptyState onSelectQuestion={onSendMessage} />
         ) : (
-          <>
-            {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+          <div
+            className="px-4 py-4"
+            role="list"
+            aria-label="Chat messages"
+          >
+            {processedMessages.map(({ message, isGrouped, isLastInGroup }) => (
+              <ChatMessage
+                key={message.id}
+                message={message}
+                isGrouped={isGrouped}
+                isLastInGroup={isLastInGroup}
+              />
             ))}
             
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span>Thinking...</span>
-              </div>
-            )}
+            {/* Typing indicator */}
+            {isLoading && <TypingIndicator />}
             
-            {/* Error message */}
-            {error && (
-              <div className="px-4 py-2 rounded-lg bg-destructive/10 text-destructive text-sm">
-                {error}
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </>
+            {/* Scroll anchor */}
+            <div ref={messagesEndRef} aria-hidden="true" />
+          </div>
         )}
       </div>
 
+      {/* Error banner */}
+      {error && <ErrorBanner message={error} />}
+
       {/* Input */}
-      <ChatInput onSend={onSendMessage} disabled={isLoading} />
-    </div>
+      <ChatInput
+        onSend={onSendMessage}
+        disabled={!!error}
+        isLoading={isLoading}
+        placeholder="Ask me anything — I'll reason through it..."
+      />
+    </aside>
   );
 }

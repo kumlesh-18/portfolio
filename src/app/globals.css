@@ -2,22 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   DESIGN SYSTEM: COLOR TOKENS
+   Light & Dark mode semantic color system
+   ============================================================================= */
+
 :root {
+  /* Legacy tokens (for backward compatibility) */
   --background: #ffffff;
   --foreground: #0f172a;
   --muted: #64748b;
   --border: #e2e8f0;
   --card: #f8fafc;
   --card-hover: #f1f5f9;
+  
+  /* Surface colors */
+  --surface-base: #ffffff;
+  --surface-raised: #f8fafc;
+  --surface-overlay: #ffffff;
+  --surface-sunken: #f1f5f9;
+  
+  /* Text colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-inverse: #ffffff;
+  --text-link: #0284c7;
+  
+  /* Border colors */
+  --border-default: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --border-strong: #cbd5e1;
+  
+  /* Interactive colors */
+  --interactive-primary: #0ea5e9;
+  --interactive-primary-hover: #0284c7;
+  --interactive-primary-active: #0369a1;
+  --interactive-secondary: #f1f5f9;
+  --interactive-secondary-hover: #e2e8f0;
+  
+  /* Feedback colors */
+  --feedback-success: #10b981;
+  --feedback-success-light: #d1fae5;
+  --feedback-warning: #f59e0b;
+  --feedback-warning-light: #fef3c7;
+  --feedback-error: #ef4444;
+  --feedback-error-light: #fee2e2;
+  --feedback-info: #0ea5e9;
+  --feedback-info-light: #e0f2fe;
+  
+  /* Chat-specific tokens */
+  --chat-user-bg: #0ea5e9;
+  --chat-user-text: #ffffff;
+  --chat-assistant-bg: #f1f5f9;
+  --chat-assistant-text: #0f172a;
+  --chat-typing-dot: #0ea5e9;
 }
 
 .dark {
+  /* Legacy tokens */
   --background: #0f172a;
   --foreground: #f8fafc;
   --muted: #94a3b8;
   --border: #1e293b;
   --card: #1e293b;
   --card-hover: #334155;
+  
+  /* Surface colors */
+  --surface-base: #0f172a;
+  --surface-raised: #1e293b;
+  --surface-overlay: #1e293b;
+  --surface-sunken: #0c1222;
+  
+  /* Text colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #0f172a;
+  --text-link: #38bdf8;
+  
+  /* Border colors */
+  --border-default: #334155;
+  --border-subtle: #1e293b;
+  --border-strong: #475569;
+  
+  /* Interactive colors */
+  --interactive-primary: #0ea5e9;
+  --interactive-primary-hover: #38bdf8;
+  --interactive-primary-active: #7dd3fc;
+  --interactive-secondary: #1e293b;
+  --interactive-secondary-hover: #334155;
+  
+  /* Feedback colors */
+  --feedback-success: #34d399;
+  --feedback-success-light: #064e3b;
+  --feedback-warning: #fbbf24;
+  --feedback-warning-light: #78350f;
+  --feedback-error: #f87171;
+  --feedback-error-light: #7f1d1d;
+  --feedback-info: #38bdf8;
+  --feedback-info-light: #0c4a6e;
+  
+  /* Chat-specific tokens */
+  --chat-user-bg: #0ea5e9;
+  --chat-user-text: #ffffff;
+  --chat-assistant-bg: #1e293b;
+  --chat-assistant-text: #f8fafc;
+  --chat-typing-dot: #38bdf8;
 }
 
 html {
@@ -117,3 +208,148 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* =============================================================================
+   CHAT COMPONENT STYLES
+   Enterprise-grade chat UI utilities
+   ============================================================================= */
+
+/* Scroll shadow indicators */
+.chat-scroll-container {
+  position: relative;
+}
+
+.chat-scroll-container::before,
+.chat-scroll-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2rem;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.chat-scroll-container::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-overlay), transparent);
+}
+
+.chat-scroll-container::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-overlay), transparent);
+}
+
+.chat-scroll-container.has-scroll-top::before {
+  opacity: 1;
+}
+
+.chat-scroll-container.has-scroll-bottom::after {
+  opacity: 1;
+}
+
+/* Typing indicator animation */
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-0.25rem);
+  }
+}
+
+.typing-dot {
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0ms; }
+.typing-dot:nth-child(2) { animation-delay: 200ms; }
+.typing-dot:nth-child(3) { animation-delay: 400ms; }
+
+/* Chat panel entrance animation */
+@keyframes chat-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-panel-enter {
+  animation: chat-panel-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Chat trigger pulse animation */
+@keyframes chat-trigger-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 0.5rem rgba(14, 165, 233, 0);
+  }
+}
+
+.chat-trigger-pulse {
+  animation: chat-trigger-pulse 2s ease-in-out infinite;
+}
+
+/* Message entrance animation */
+@keyframes message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-enter {
+  animation: message-enter 0.2s ease-out;
+}
+
+/* Focus visible styles for chat components */
+.chat-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface-base), 0 0 0 4px var(--interactive-primary);
+}
+
+/* Hide scrollbar but keep functionality */
+.chat-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chat-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom thin scrollbar for chat */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border-default);
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-tertiary);
+}
+

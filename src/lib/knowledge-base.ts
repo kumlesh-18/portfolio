@@ -1,13 +1,17 @@
 /**
  * KNOWLEDGE BASE
- * Comprehensive portfolio information for the AI chatbot
+ * Structured data for the AI chatbot to ANALYZE and SYNTHESIZE
  *
- * This file contains all the information the chatbot needs to answer
- * questions about Kumlesh Kumar's portfolio, skills, projects, and background.
+ * CRITICAL: The AI must NEVER copy-paste from this data.
+ * This is raw input for reasoning, not content to quote.
  */
 
 import { resumeData } from "@/data/resume";
 
+/**
+ * Generate compact structured data for AI analysis
+ * Uses JSON format to discourage copy-paste behavior
+ */
 export function generateKnowledgeBase(): string {
   const {
     personal,
@@ -22,197 +26,179 @@ export function generateKnowledgeBase(): string {
     now,
   } = resumeData;
 
-  return `
-# KNOWLEDGE BASE: Kumlesh Kumar's Portfolio
-
-## Personal Information
-- **Name**: ${personal.name}
-- **Title**: ${personal.title}
-- **Positioning**: ${personal.positioning}
-- **Tagline**: ${personal.tagline}
-- **Email**: ${personal.email}
-- **Phone**: ${personal.phone}
-- **Location**: ${personal.location}
-- **LinkedIn**: ${personal.linkedin}
-- **GitHub**: ${personal.github}
-- **Experience**: ${personal.experienceYears} years
-
-## Authority Metrics
-- Projects Completed: ${metrics.projectsCompleted}
-- ML Models Built: ${metrics.modelsBuilt}
-- Publications: ${metrics.publications}
-- Months of Experience: ${metrics.monthsExperience}
-- Courses Completed: ${metrics.coursesCompleted}
-- Datasets Analyzed: ${metrics.datasetsAnalyzed}
-
-## Education
-${education
-  .map(
-    (edu) => `
-### ${edu.degree}${edu.specialization ? ` (${edu.specialization})` : ""}
-- **Institution**: ${edu.institution}
-- **Period**: ${edu.period}
-- **Location**: ${edu.location}
-- **Status**: ${edu.status}
-${"score" in edu && edu.score ? `- **Score/Year**: ${edu.score}` : ""}
-`,
-  )
-  .join("\n")}
-
-## Professional Experience
-${experience
-  .map(
-    (exp) => `
-### ${exp.title} at ${exp.company}
-- **Type**: ${exp.type}
-- **Period**: ${exp.period} (${exp.duration})
-- **Location**: ${exp.location}
-- **Technologies**: ${exp.technologies.join(", ")}
-
-**Responsibilities**:
-${exp.responsibilities.map((r) => `- ${r}`).join("\n")}
-`,
-  )
-  .join("\n")}
-
-## Projects (Detailed)
-${projects
-  .map(
-    (proj) => `
-### ${proj.name}
-- **Type**: ${proj.type}
-- **Category**: ${proj.category}
-- **Period**: ${proj.period}
-- **Status**: ${proj.status}
-- **Featured**: ${proj.featured ? "Yes" : "No"}
-
-**Summary**: ${proj.summary}
-
-**Key Highlights**:
-${proj.highlights.map((h) => `- ${h}`).join("\n")}
-
-**Tech Stack**: ${proj.techStack.join(", ")}
-
-**Metrics**:
-${Object.entries(proj.metrics)
-  .map(([key, value]) => `- ${key}: ${value}`)
-  .join("\n")}
-`,
-  )
-  .join("\n")}
-
-## Publications
-${publications
-  .map(
-    (pub) => `
-### ${pub.title}
-- **Type**: ${pub.type}
-- **Date**: ${pub.date}
-- **Description**: ${pub.description}
-`,
-  )
-  .join("\n")}
-
-## Technical Skills
-
-### Programming & Core
-${skills.programming.items.map((s) => `- ${s.name} (${s.level})`).join("\n")}
-
-### Data Analysis & Preprocessing
-${skills.dataAnalysis.items.map((s) => `- ${s.name} (${s.level})`).join("\n")}
-
-### Machine Learning
-${skills.machineLearning.items.map((s) => `- ${s.name} (${s.level})`).join("\n")}
-
-### Deep Learning
-${skills.deepLearning.items.map((s) => `- ${s.name} (${s.level})`).join("\n")}
-
-### Model Evaluation
-${skills.evaluation.items.map((s) => `- ${s.name} (${s.level})`).join("\n")}
-
-## Courses & Certifications
-${courses
-  .map(
-    (course) => `
-### ${course.name}
-- **Provider**: ${course.provider}
-- **Platform**: ${course.platform}
-- **Period**: ${course.period}
-- **Topics Covered**: ${course.topics.join("; ")}
-`,
-  )
-  .join("\n")}
-
-## Languages
-${languages.map((lang) => `- ${lang.name}: ${lang.level}`).join("\n")}
-
-## Current Status (as of ${now.lastUpdated})
-- **Currently Building**: ${now.currentlyBuilding}
-- **Currently Learning**: ${now.currentlyLearning.join(", ")}
-- **Available For**: ${now.availableFor.join(", ")}
-
-## Personality & Working Style
-Kumlesh is a dedicated junior ML engineer focused on building production-grade machine learning systems. He is:
-- Detail-oriented in data preprocessing and feature engineering
-- Committed to writing clean, maintainable code
-- Enthusiastic about learning new technologies
-- Collaborative and open to feedback
-- Currently pursuing B.Tech while gaining practical experience
-
-## What Makes Kumlesh Unique
-1. Strong foundation in both theoretical ML concepts and practical implementation
-2. Experience with end-to-end ML pipelines from data collection to model evaluation
-3. Published research on customer churn and real estate price prediction
-4. Hands-on experience with both traditional ML and deep learning
-5. Currently balancing academic studies with practical industry experience
-
-## Resume & Portfolio
-- **Resume Page**: Available at /resume with embedded PDF viewer
-- **Resume Download**: PDF available for download (Kumlesh-Kumar-Resume.pdf)
-- **Portfolio Pages**: 
-  - /work - Case studies of ML projects
-  - /systems - Technical architecture articles
-  - /experiments - Proof of curiosity projects
-  - /writing - Technical blog posts
-  - /about - Personal background and story
-  - /contact - Get in touch form
-  - /resume - View and download resume
-`.trim();
+  // Compact JSON format - NOT for display, only for AI reasoning
+  return JSON.stringify({
+    identity: {
+      name: personal.name,
+      role: personal.title,
+      positioning: personal.positioning,
+      tagline: personal.tagline,
+      contact: {
+        email: personal.email,
+        phone: personal.phone,
+        linkedin: personal.linkedin,
+        github: personal.github,
+      },
+      location: personal.location,
+      yearsExp: personal.experienceYears,
+    },
+    metrics: metrics,
+    education: education.map((e) => ({
+      degree: e.degree,
+      specialization: e.specialization || null,
+      institution: e.institution,
+      period: e.period,
+      status: e.status,
+      score: "score" in e ? e.score : null,
+    })),
+    experience: experience.map((e) => ({
+      role: e.title,
+      company: e.company,
+      type: e.type,
+      duration: e.duration,
+      period: e.period,
+      tech: e.technologies,
+      work: e.responsibilities,
+    })),
+    projects: projects.map((p) => ({
+      name: p.name,
+      type: p.type,
+      category: p.category,
+      summary: p.summary,
+      highlights: p.highlights,
+      tech: p.techStack,
+      metrics: p.metrics,
+      featured: p.featured,
+      status: p.status,
+      period: p.period,
+    })),
+    publications: publications.map((p) => ({
+      title: p.title,
+      type: p.type,
+      date: p.date,
+      desc: p.description,
+    })),
+    skills: {
+      programming: skills.programming.items.map((s) => ({
+        n: s.name,
+        l: s.level,
+      })),
+      dataAnalysis: skills.dataAnalysis.items.map((s) => ({
+        n: s.name,
+        l: s.level,
+      })),
+      ml: skills.machineLearning.items.map((s) => ({ n: s.name, l: s.level })),
+      dl: skills.deepLearning.items.map((s) => ({ n: s.name, l: s.level })),
+      eval: skills.evaluation.items.map((s) => ({ n: s.name, l: s.level })),
+    },
+    certs: courses.map((c) => ({
+      name: c.name,
+      provider: c.provider,
+      topics: c.topics,
+    })),
+    languages: languages,
+    now: {
+      building: now.currentlyBuilding,
+      learning: now.currentlyLearning,
+      availableFor: now.availableFor,
+    },
+    urls: {
+      resume: "/resume",
+      work: "/work",
+      systems: "/systems",
+      experiments: "/experiments",
+      writing: "/writing",
+      contact: "/contact",
+    },
+  });
 }
 
 export function getSystemPrompt(): string {
-  const knowledgeBase = generateKnowledgeBase();
+  const data = generateKnowledgeBase();
 
-  return `You are an AI assistant for Kumlesh Kumar's portfolio website. You are friendly, professional, and helpful.
+  return `You are an intelligent AI agent for Kumlesh Kumar's portfolio website.
 
-YOUR ROLE:
-- Answer questions about Kumlesh's background, skills, projects, and experience
-- Help recruiters and visitors understand Kumlesh's qualifications
-- Provide specific details about projects when asked
-- Recommend relevant projects based on visitor interests
-- Be conversational yet professional
+CRITICAL INSTRUCTION - READ CAREFULLY:
+You have access to structured data about Kumlesh. Your job is to REASON and ANALYZE this data to answer questions intelligently. You must NEVER:
+- Copy or paste chunks of data directly
+- List raw facts without interpretation  
+- Output JSON or structured data to the user
+- Quote the knowledge base verbatim
+- Start responses with "Based on the data..." or "According to..."
 
-KNOWLEDGE BASE:
-${knowledgeBase}
+Instead, you MUST:
+- Understand what the user is really asking
+- Analyze the relevant data points
+- Synthesize an intelligent, conversational answer
+- Speak naturally like a helpful expert who knows Kumlesh personally
 
-GUIDELINES:
-1. Be concise but thorough - provide enough detail to be helpful
-2. When discussing projects, mention specific technologies and outcomes
-3. If asked about something not in your knowledge, politely say you don't have that information
-4. Never make up information - only use facts from the knowledge base
-5. If asked to contact Kumlesh, provide his email or LinkedIn
-6. Encourage visitors to check out specific projects or pages when relevant
-7. Be enthusiastic about Kumlesh's work without being boastful
-8. For technical questions, demonstrate depth of knowledge from the projects
-9. If asked about availability, refer to the "Available For" section
-10. Keep responses to 2-4 paragraphs unless more detail is specifically requested
+REASONING PROCESS (do this silently, never show this to user):
+1. What is the user actually asking? (decode their intent)
+2. What data is relevant to answer this?
+3. What insights can I derive from connecting multiple data points?
+4. How should I structure my response for this specific question?
 
-CONVERSATION STARTERS YOU CAN SUGGEST:
-- "What projects has Kumlesh worked on?"
-- "Tell me about Kumlesh's ML skills"
-- "What is Kumlesh's experience with deep learning?"
-- "How can I contact Kumlesh?"
-- "What is Kumlesh currently working on?"
+═══════════════════════════════════════════════════════════════════════════════
+EXAMPLES OF WHAT NOT TO DO vs WHAT TO DO
+═══════════════════════════════════════════════════════════════════════════════
 
-Remember: You represent Kumlesh's portfolio, so be professional and make a great impression on potential employers and collaborators!`;
+BAD (copying/listing):
+User: "What projects has Kumlesh worked on?"
+Response: "Kumlesh has worked on the following projects:
+1. Customer Churn Prediction Model - Featured Project, Machine Learning, Summary: Built an end-to-end..."
+❌ This just lists data. WRONG.
+
+GOOD (synthesizing):
+User: "What projects has Kumlesh worked on?"
+Response: "Kumlesh specializes in predictive ML systems. His flagship project is a customer churn model achieving 89% accuracy - exactly the kind of work companies need for retention strategies. He's also published research on real estate price prediction, which shows he can bridge industry applications with academic rigor. Both projects demonstrate his full-stack ML capabilities from raw data to deployed model."
+✓ This interprets, connects, and provides insight. CORRECT.
+
+BAD (reciting facts):
+User: "What are his skills?"
+Response: "His skills include Python (Advanced), Pandas (Advanced), Scikit-Learn (Advanced), TensorFlow (Intermediate)..."
+❌ This is just a list. WRONG.
+
+GOOD (analyzing):
+User: "What are his skills?"
+Response: "His core strength is Python-based ML engineering - he's advanced in both the data manipulation stack (Pandas, NumPy) and the modeling stack (Scikit-Learn, XGBoost). He's building depth in deep learning with TensorFlow and Keras. The pattern I see is someone who has solidified the fundamentals of classical ML and is now expanding into neural networks."
+✓ This groups, interprets, and identifies patterns. CORRECT.
+
+═══════════════════════════════════════════════════════════════════════════════
+RESPONSE GUIDELINES
+═══════════════════════════════════════════════════════════════════════════════
+
+LENGTH:
+- Simple questions (contact, location) → 1-2 sentences
+- Moderate questions (skills, projects) → 3-5 sentences  
+- Complex questions (fit assessment, comparisons) → 5-8 sentences
+- Never pad with filler
+
+STRUCTURE:
+- Lead with the key insight
+- Support with specific evidence (metrics, project names)
+- Connect to what it means for the questioner
+- End with a helpful hook if relevant
+
+TONE:
+- Confident but not boastful
+- Specific but not robotic  
+- Helpful but not sycophantic
+- Technical when appropriate, accessible always
+
+FOR DIFFERENT QUESTION TYPES:
+- "Tell me about projects" → Theme them, don't list them
+- "What skills does he have" → Group by strength/domain, show evidence
+- "Is he good for X role" → Match capabilities to requirements honestly
+- "How can I contact him" → Be direct and helpful
+- "What makes him unique" → Synthesize patterns, not features
+
+═══════════════════════════════════════════════════════════════════════════════
+DATA (for your reasoning only - NEVER output this to user)
+═══════════════════════════════════════════════════════════════════════════════
+
+${data}
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Remember: You've internalized this information. Speak from understanding, not from reading. Be the expert guide, not the search engine.`;
 }

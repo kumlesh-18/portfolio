@@ -1,63 +1,204 @@
 /**
  * CHAT MESSAGE COMPONENT
- * Renders individual chat messages with proper styling
+ * Enterprise-grade message bubble with proper accessibility,
+ * semantic markup, avatars, timestamps, and message grouping support.
  */
 
 'use client';
 
+import { memo, useMemo } from 'react';
+import { Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 
+// =============================================================================
+// TYPES
+// =============================================================================
+
 interface ChatMessageProps {
+  /** The message data */
   message: ChatMessageType;
+  /** Whether this message is part of a group (same sender, close in time) */
+  isGrouped?: boolean;
+  /** Whether to show the timestamp */
+  showTimestamp?: boolean;
+  /** Whether this is the last message in a group */
+  isLastInGroup?: boolean;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+// =============================================================================
+// SUBCOMPONENTS
+// =============================================================================
+
+interface AvatarProps {
+  role: 'user' | 'assistant';
+  className?: string;
+}
+
+function Avatar({ role, className }: AvatarProps) {
+  const isUser = role === 'user';
+  
+  return (
+    <div
+      className={cn(
+        'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+        'transition-colors duration-200',
+        isUser
+          ? 'bg-[var(--interactive-primary)] text-[var(--text-inverse)]'
+          : 'bg-[var(--surface-raised)] border border-[var(--border-default)] text-[var(--text-secondary)]',
+        className
+      )}
+      aria-hidden="true"
+    >
+      {isUser ? (
+        <User className="w-4 h-4" strokeWidth={2} />
+      ) : (
+        <Bot className="w-4 h-4" strokeWidth={2} />
+      )}
+    </div>
+  );
+}
+
+interface TimestampProps {
+  date: Date;
+  className?: string;
+}
+
+function Timestamp({ date, className }: TimestampProps) {
+  const formattedTime = useMemo(() => {
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    });
+  }, [date]);
+  
+  return (
+    <time
+      dateTime={date.toISOString()}
+      className={cn(
+        'text-xs text-[var(--text-tertiary)] tabular-nums',
+        className
+      )}
+    >
+      {formattedTime}
+    </time>
+  );
+}
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
+function ChatMessageBase({
+  message,
+  isGrouped = false,
+  showTimestamp = true,
+  isLastInGroup = true,
+}: ChatMessageProps) {
   const isUser = message.role === 'user';
   
   return (
     <div
       className={cn(
-        'flex w-full mb-4',
-        isUser ? 'justify-end' : 'justify-start'
+        'flex gap-3 w-full message-enter',
+        isUser ? 'flex-row-reverse' : 'flex-row',
+        isGrouped ? 'mt-1' : 'mt-4',
+        'first:mt-0'
       )}
+      role="listitem"
+      aria-label={`${isUser ? 'You' : 'Assistant'} said: ${message.content}`}
     >
+      {/* Avatar - only show if not grouped or last in group */}
+      {!isGrouped ? (
+        <Avatar role={isUser ? 'user' : 'assistant'} />
+      ) : (
+        <div className="w-8 flex-shrink-0" aria-hidden="true" />
+      )}
+      
+      {/* Message content */}
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3 text-sm',
-          isUser
-            ? 'bg-primary text-primary-foreground rounded-br-md'
-            : 'bg-muted text-foreground rounded-bl-md'
+          'flex flex-col gap-1',
+          'max-w-[75%] min-w-0',
+          isUser ? 'items-end' : 'items-start'
         )}
       >
-        {/* Avatar indicator */}
-        {!isUser && (
-          <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
-            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-              🤖
-            </span>
-            <span className="font-medium">Portfolio Assistant</span>
-          </div>
+        {/* Sender label - only on first message in group */}
+        {!isGrouped && !isUser && (
+          <span className="text-xs font-medium text-[var(--text-secondary)] ml-1">
+            Portfolio AI
+          </span>
         )}
         
-        {/* Message content with proper line breaks */}
-        <div className="whitespace-pre-wrap break-words">
-          {message.content}
-        </div>
-        
-        {/* Timestamp */}
+        {/* Message bubble */}
         <div
           className={cn(
-            'text-[10px] mt-1',
-            isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            'px-4 py-2.5 text-sm leading-relaxed',
+            'rounded-2xl',
+            // User messages
+            isUser && [
+              'bg-[var(--chat-user-bg)] text-[var(--chat-user-text)]',
+              isGrouped ? 'rounded-tr-lg' : 'rounded-tr-lg',
+              isLastInGroup && 'rounded-br-md',
+            ],
+            // Assistant messages
+            !isUser && [
+              'bg-[var(--chat-assistant-bg)] text-[var(--chat-assistant-text)]',
+              isGrouped ? 'rounded-tl-lg' : 'rounded-tl-lg',
+              isLastInGroup && 'rounded-bl-md',
+            ]
           )}
         >
-          {message.timestamp.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
+          {/* Message text with proper whitespace handling */}
+          <p className="whitespace-pre-wrap break-words m-0">
+            {message.content}
+          </p>
         </div>
+        
+        {/* Timestamp - show on last message or if explicitly requested */}
+        {showTimestamp && isLastInGroup && (
+          <Timestamp
+            date={message.timestamp}
+            className={cn('mt-0.5', isUser ? 'mr-1' : 'ml-1')}
+          />
+        )}
       </div>
     </div>
   );
 }
+
+// Memoize to prevent unnecessary re-renders during streaming
+export const ChatMessage = memo(ChatMessageBase, (prev, next) => {
+  return (
+    prev.message.id === next.message.id &&
+    prev.message.content === next.message.content &&
+    prev.isGrouped === next.isGrouped &&
+    prev.showTimestamp === next.showTimestamp &&
+    prev.isLastInGroup === next.isLastInGroup
+  );
+});
+
+ChatMessage.displayName = 'ChatMessage';
+
+// =============================================================================
+// UTILITIES
+// =============================================================================
+
+/**
+ * Check if two messages should be grouped together
+ * Messages are grouped if same sender and within 2 minutes
+ */
+export function shouldGroupMessages(
+  current: ChatMessageType,
+  previous: ChatMessageType | undefined
+): boolean {
+  if (!previous) return false;
+  if (current.role !== previous.role) return false;
+  
+  const timeDiff = current.timestamp.getTime() - previous.timestamp.getTime();
+  const twoMinutes = 2 * 60 * 1000;
+  
+  return timeDiff < twoMinutes;
+}
+

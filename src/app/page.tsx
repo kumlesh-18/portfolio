@@ -11,6 +11,7 @@ import { ContactSection } from '@/components/sections/ContactSection'
  * Implements the hero-first approach from DEVELOPMENT_PLAN.md:
  * - One-sentence positioning (from resume.ts)
  * - Authority metrics (real, defensible)
+ * - Interactive skills showcase
  * - Featured work preview
  * - Skills overview
  * - Experience timeline

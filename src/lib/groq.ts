@@ -48,5 +48,5 @@ export const DEFAULT_MODEL = GROQ_MODELS.LLAMA_3_70B;
 // Rate limiting configuration
 export const RATE_LIMIT = {
   maxRequestsPerMinute: 10,
-  maxTokensPerRequest: 1024,
+  maxTokensPerRequest: 2048, // Increased for cognitive-depth responses
 };
