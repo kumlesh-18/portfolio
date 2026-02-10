@@ -15,7 +15,7 @@ import {
 export const metadata: Metadata = {
   title: resumeConfig.meta.title,
   description: resumeConfig.meta.description,
-  keywords: resumeConfig.meta.keywords,
+  keywords: [...resumeConfig.meta.keywords],
   openGraph: {
     title: resumeConfig.meta.title,
     description: resumeConfig.meta.description,
