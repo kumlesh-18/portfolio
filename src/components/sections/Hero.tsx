@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, Github, Linkedin, FileText } from 'lucide-react'
 import { resumeData } from '@/data/resume'
-import { Button } from '@/components/ui'
+import { Button, BGPattern } from '@/components/ui'
 
 /**
  * Hero Section
@@ -16,6 +16,9 @@ export function Hero() {
 
   return (
     <section className="relative py-20 lg:py-32">
+      {/* Grid Background Pattern */}
+      <BGPattern variant="grid" mask="fade-edges" size={32} fill="var(--border)" />
+      
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary-500/5 rounded-full blur-3xl" />

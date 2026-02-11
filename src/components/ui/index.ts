@@ -8,3 +8,4 @@ export {
   CardFooter,
 } from "./Card";
 export { Badge, SkillBadge, StatusBadge } from "./Badge";
+export { BGPattern } from "./bg-pattern";
