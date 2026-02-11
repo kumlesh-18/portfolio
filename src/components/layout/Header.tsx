@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu, X, FileText } from 'lucide-react'
 import { Navigation } from './Navigation'
 import { ThemeToggle } from './ThemeToggle'
+import { SearchButton } from '@/components/ui'
 import { resumeData } from '@/data/resume'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +30,7 @@ export function Header() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-4">
             <Navigation />
+            <SearchButton />
             <Link
               href="/resume"
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"

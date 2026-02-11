@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -51,6 +52,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  alternates: {
+    types: {
+      'application/rss+xml': '/rss.xml',
+    },
+  },
 }
 
 export default function RootLayout({
@@ -94,6 +100,9 @@ export default function RootLayout({
           
           {/* AI Chat Widget */}
           <ChatWidget />
+          
+          {/* Vercel Analytics */}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

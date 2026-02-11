@@ -9,3 +9,11 @@ export {
 } from "./Card";
 export { Badge, SkillBadge, StatusBadge } from "./Badge";
 export { BGPattern } from "./bg-pattern";
+export {
+  TableOfContents,
+  extractHeadings,
+  type TOCItem,
+} from "./TableOfContents";
+export { SkipToContent } from "./SkipToContent";
+export { SearchDialog, SearchButton } from "./SearchDialog";
+export { NewsletterForm } from "./NewsletterForm";
