@@ -82,5 +82,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...projectRoutes,
     ...articleRoutes,
     ...systemsRoutes,
-  ];
+  ] as MetadataRoute.Sitemap;
 }
