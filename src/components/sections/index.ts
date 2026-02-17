@@ -1,5 +1,4 @@
 export { Hero } from "./Hero";
-export { HeroMLDashboard } from "./HeroMLDashboard";
 export { MetricsPanel } from "./MetricsPanel";
 export { ProjectsGrid } from "./ProjectsGrid";
 export { SkillsAnalytics, SkillsCompact } from "./SkillsAnalytics";
