@@ -45,13 +45,27 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
+  const [showProactiveGreeting, setShowProactiveGreeting] = useState(false);
 
   // Clear notification when opening
   useEffect(() => {
     if (widgetState === 'open') {
       setHasNewMessage(false);
+      setShowProactiveGreeting(false);
     }
   }, [widgetState]);
+
+  // Proactive greeting after 30 seconds (only once per session)
+  useEffect(() => {
+    if (widgetState === 'closed' && messages.length === 0) {
+      const timer = setTimeout(() => {
+        setShowProactiveGreeting(true);
+        setHasNewMessage(true);
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [widgetState, messages.length]);
 
   // Handle sending a message
   const handleSendMessage = useCallback(async (content: string) => {
@@ -66,6 +80,7 @@ export function ChatWidget() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setError(null);
+    setLastUserMessage(content);
 
     // Prepare history for API (exclude system messages)
     const history = messages
@@ -169,6 +184,24 @@ export function ChatWidget() {
     setWidgetState(prev => prev === 'open' ? 'closed' : 'open');
   }, []);
 
+  // Clear all messages
+  const handleClearChat = useCallback(() => {
+    setMessages([]);
+    setError(null);
+    setLastUserMessage(null);
+  }, []);
+
+  // Retry last failed message
+  const handleRetry = useCallback(() => {
+    if (lastUserMessage) {
+      // Remove the last user message (failed one)
+      setMessages(prev => prev.slice(0, -1));
+      setError(null);
+      // Re-send it
+      handleSendMessage(lastUserMessage);
+    }
+  }, [lastUserMessage, handleSendMessage]);
+
   const isOpen = widgetState === 'open';
   const isMinimized = widgetState === 'minimized';
   const showNotification = (isMinimized || widgetState === 'closed') && hasNewMessage;
@@ -192,6 +225,8 @@ export function ChatWidget() {
             onSendMessage={handleSendMessage}
             onClose={handleClose}
             onMinimize={handleMinimize}
+            onClearChat={handleClearChat}
+            onRetry={handleRetry}
           />
         </div>
       )}
@@ -259,6 +294,35 @@ export function ChatWidget() {
           >
             {messages.filter(m => m.role === 'assistant').length > 0 ? '!' : ''}
           </span>
+        )}
+        
+        {/* Proactive greeting tooltip */}
+        {showProactiveGreeting && !isOpen && (
+          <div
+            className={cn(
+              'absolute bottom-full right-0 mb-3',
+              'px-4 py-3 rounded-xl',
+              'bg-[var(--surface-overlay)]',
+              'border border-[var(--border-default)]',
+              'shadow-lg',
+              'text-sm text-[var(--text-primary)]',
+              'whitespace-nowrap',
+              'animate-in fade-in-0 slide-in-from-bottom-2 duration-300'
+            )}
+          >
+            <p className="font-medium">👋 Hi! Want to learn about my work?</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">Click to chat with Portfolio AI</p>
+            {/* Arrow */}
+            <div
+              className={cn(
+                'absolute top-full right-6',
+                'w-0 h-0',
+                'border-l-8 border-r-8 border-t-8',
+                'border-l-transparent border-r-transparent',
+                'border-t-[var(--surface-overlay)]'
+              )}
+            />
+          </div>
         )}
       </button>
     </>

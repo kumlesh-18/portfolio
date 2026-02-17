@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { resumeData } from '@/data/resume'
-import { Card, Badge } from '@/components/ui'
+import { Card, Badge, SkillsRadar, defaultMLSkills } from '@/components/ui'
 import { SkillsCompact } from '@/components/sections/SkillsAnalytics'
-import { GraduationCap, Briefcase, BookOpen, Heart, Target, AlertTriangle, FileText } from 'lucide-react'
+import { TestimonialsSection, sampleTestimonials } from '@/components/sections'
+import { GraduationCap, Briefcase, BookOpen, Heart, Target, AlertTriangle, FileText, Radar } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -257,7 +258,7 @@ export default function AboutPage() {
           </section>
 
           {/* Red Flags I Avoid */}
-          <section>
+          <section className="mb-12">
             <h2 className="flex items-center gap-2 text-2xl font-bold mb-6">
               <AlertTriangle className="w-6 h-6 text-accent-yellow" />
               Environments I Avoid
@@ -288,6 +289,20 @@ export default function AboutPage() {
               </ul>
             </Card>
           </section>
+
+          {/* Skills Radar */}
+          <section className="mb-12">
+            <h2 className="flex items-center gap-2 text-2xl font-bold mb-6">
+              <Radar className="w-6 h-6 text-primary-500" />
+              Skills Overview
+            </h2>
+            <Card>
+              <SkillsRadar skills={defaultMLSkills} />
+            </Card>
+          </section>
+
+          {/* Testimonials */}
+          <TestimonialsSection testimonials={sampleTestimonials} />
         </div>
       </div>
     </div>

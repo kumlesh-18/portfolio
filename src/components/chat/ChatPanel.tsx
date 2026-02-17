@@ -2,12 +2,20 @@
  * CHAT PANEL COMPONENT
  * Enterprise-grade chat window with message grouping, scroll shadows,
  * typing indicators, and full accessibility support.
+ * 
+ * v1.3.0+ Features:
+ * - Clear chat button
+ * - Retry on error
+ * - Conversation export
+ * - Context-aware prompts
+ * - Keyboard shortcuts (Esc to close)
  */
 
 'use client';
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { X, Minus, Bot, Sparkles } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { X, Minus, Bot, Sparkles, Trash2, Download, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage, shouldGroupMessages } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -17,7 +25,47 @@ import type { ChatMessage as ChatMessageType } from '@/types/chat';
 // CONSTANTS
 // =============================================================================
 
-const SUGGESTED_QUESTIONS = [
+// Context-aware suggestions based on current page
+const CONTEXT_SUGGESTIONS: Record<string, readonly string[]> = {
+  '/': [
+    "What makes Kumlesh stand out?",
+    "Walk me through his key achievements",
+    "What's his tech stack expertise?",
+    "How can I contact him?",
+  ],
+  '/work': [
+    "Tell me about these projects",
+    "Which project had the biggest impact?",
+    "What technologies does he use most?",
+    "How does he approach problem-solving?",
+  ],
+  '/about': [
+    "What's his educational background?",
+    "What are his core values?",
+    "How does he approach ML problems?",
+    "What makes him different from others?",
+  ],
+  '/writing': [
+    "What topics does he write about?",
+    "Which publications are most popular?",
+    "What research has he done?",
+    "How does he share knowledge?",
+  ],
+  '/resume': [
+    "Summarize his experience",
+    "What are his strongest skills?",
+    "What certifications does he have?",
+    "What's his career trajectory?",
+  ],
+  '/contact': [
+    "What's the best way to reach him?",
+    "Is he open to opportunities?",
+    "What kind of roles interest him?",
+    "Can I schedule a call?",
+  ],
+} as const;
+
+const DEFAULT_SUGGESTIONS = [
   "What makes Kumlesh a good fit for ML roles?",
   "Walk me through his most impactful project",
   "How do his skills connect across projects?",
@@ -41,6 +89,10 @@ interface ChatPanelProps {
   onClose: () => void;
   /** Callback to minimize the panel */
   onMinimize: () => void;
+  /** Callback to clear chat */
+  onClearChat?: () => void;
+  /** Callback to retry last message */
+  onRetry?: () => void;
 }
 
 // =============================================================================
@@ -101,9 +153,10 @@ function TypingIndicator({ className }: TypingIndicatorProps) {
 
 interface EmptyStateProps {
   onSelectQuestion: (question: string) => void;
+  suggestions: readonly string[];
 }
 
-function EmptyState({ onSelectQuestion }: EmptyStateProps) {
+function EmptyState({ onSelectQuestion, suggestions }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
       {/* Icon */}
@@ -133,7 +186,7 @@ function EmptyState({ onSelectQuestion }: EmptyStateProps) {
         <p className="text-xs font-medium text-[var(--text-tertiary)] mb-2">
           Try asking
         </p>
-        {SUGGESTED_QUESTIONS.map((question) => (
+        {suggestions.map((question) => (
           <button
             key={question}
             onClick={() => onSelectQuestion(question)}
@@ -157,10 +210,11 @@ function EmptyState({ onSelectQuestion }: EmptyStateProps) {
 
 interface ErrorBannerProps {
   message: string;
+  onRetry?: () => void;
   onDismiss?: () => void;
 }
 
-function ErrorBanner({ message }: ErrorBannerProps) {
+function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
     <div
       role="alert"
@@ -170,8 +224,27 @@ function ErrorBanner({ message }: ErrorBannerProps) {
         'text-sm text-[var(--feedback-error)]'
       )}
     >
-      <p className="font-medium">Something went wrong</p>
-      <p className="text-[var(--feedback-error)]/80 mt-0.5">{message}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">Something went wrong</p>
+          <p className="text-[var(--feedback-error)]/80 mt-0.5">{message}</p>
+        </div>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
+              'bg-[var(--feedback-error)] text-white',
+              'hover:bg-[var(--feedback-error)]/90',
+              'text-xs font-medium',
+              'transition-colors'
+            )}
+          >
+            <RotateCcw className="w-3 h-3" />
+            Retry
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -187,11 +260,60 @@ export function ChatPanel({
   onSendMessage,
   onClose,
   onMinimize,
+  onClearChat,
+  onRetry,
 }: ChatPanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const [hasScrollTop, setHasScrollTop] = useState(false);
   const [hasScrollBottom, setHasScrollBottom] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  
+  // Get current page for context-aware suggestions
+  const pathname = usePathname();
+  const suggestions = useMemo(() => {
+    return CONTEXT_SUGGESTIONS[pathname] || DEFAULT_SUGGESTIONS;
+  }, [pathname]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to close
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Export conversation as text
+  const handleExport = useCallback(() => {
+    const content = messages
+      .map((m) => `[${m.role.toUpperCase()}] ${m.content}`)
+      .join('\n\n');
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [messages]);
+
+  // Clear chat with confirmation
+  const handleClearChat = useCallback(() => {
+    if (showClearConfirm) {
+      onClearChat?.();
+      setShowClearConfirm(false);
+    } else {
+      setShowClearConfirm(true);
+      setTimeout(() => setShowClearConfirm(false), 3000);
+    }
+  }, [showClearConfirm, onClearChat]);
 
   // Process messages with grouping information
   const processedMessages = useMemo(() => {
@@ -311,6 +433,45 @@ export function ChatPanel({
         
         {/* Actions */}
         <div className="flex items-center gap-1">
+          {/* Export button - only show when there are messages */}
+          {hasMessages && (
+            <button
+              onClick={handleExport}
+              className={cn(
+                'w-9 h-9 rounded-lg',
+                'flex items-center justify-center',
+                'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]',
+                'hover:bg-[var(--interactive-secondary)]',
+                'transition-colors duration-150',
+                'chat-focus-ring'
+              )}
+              aria-label="Export conversation"
+              title="Export conversation"
+            >
+              <Download className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
+          
+          {/* Clear chat button - only show when there are messages */}
+          {hasMessages && onClearChat && (
+            <button
+              onClick={handleClearChat}
+              className={cn(
+                'w-9 h-9 rounded-lg',
+                'flex items-center justify-center',
+                'transition-colors duration-150',
+                'chat-focus-ring',
+                showClearConfirm
+                  ? 'text-[var(--feedback-error)] bg-[var(--feedback-error)]/10'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-secondary)]'
+              )}
+              aria-label={showClearConfirm ? 'Click again to confirm' : 'Clear chat'}
+              title={showClearConfirm ? 'Click again to confirm' : 'Clear chat'}
+            >
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
+          
           <button
             onClick={onMinimize}
             className={cn(
@@ -335,7 +496,8 @@ export function ChatPanel({
               'transition-colors duration-150',
               'chat-focus-ring'
             )}
-            aria-label="Close chat"
+            aria-label="Close chat (Esc)"
+            title="Close (Esc)"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -353,7 +515,7 @@ export function ChatPanel({
         )}
       >
         {!hasMessages ? (
-          <EmptyState onSelectQuestion={onSendMessage} />
+          <EmptyState onSelectQuestion={onSendMessage} suggestions={suggestions} />
         ) : (
           <div
             className="px-4 py-4"
@@ -379,7 +541,7 @@ export function ChatPanel({
       </div>
 
       {/* Error banner */}
-      {error && <ErrorBanner message={error} />}
+      {error && <ErrorBanner message={error} onRetry={onRetry} />}
 
       {/* Input */}
       <ChatInput

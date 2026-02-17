@@ -4,6 +4,8 @@ import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ChatWidget } from '@/components/chat'
+import { WebVitals } from '@/components/WebVitals'
+import { ReadingProgress } from '@/components/ui'
 import { resumeData } from '@/data/resume'
 import './globals.css'
 
@@ -85,6 +87,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <ThemeProvider>
+          {/* Reading progress bar */}
+          <ReadingProgress />
+          
           {/* Skip link for accessibility */}
           <a href="#main-content" className="skip-link">
             Skip to main content
@@ -101,8 +106,9 @@ export default function RootLayout({
           {/* AI Chat Widget */}
           <ChatWidget />
           
-          {/* Vercel Analytics */}
+          {/* Analytics & Monitoring */}
           <Analytics />
+          <WebVitals />
         </ThemeProvider>
       </body>
     </html>

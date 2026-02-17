@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Clock, Calendar } from 'lucide-react'
-import { Card, Badge } from '@/components/ui'
+import { Card, Badge, ViewCounter } from '@/components/ui'
 import { resumeData } from '@/data/resume'
 
 export const metadata: Metadata = {
@@ -128,6 +128,7 @@ export default function WritingPage() {
                         <Clock className="w-4 h-4" />
                         {article.readingTime} min read
                       </span>
+                      <ViewCounter slug={article.id} increment={false} />
                     </div>
                     <Link 
                       href={`/writing/${article.id}`}
@@ -164,6 +165,7 @@ export default function WritingPage() {
                       <Clock className="w-4 h-4" />
                       {article.readingTime} min
                     </span>
+                    <ViewCounter slug={article.id} increment={false} />
                     <span>{article.date}</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>

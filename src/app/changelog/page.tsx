@@ -26,6 +26,25 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: 'February 2026',
+    type: 'minor',
+    changes: [
+      { type: 'added', description: 'Dynamic OG image generation for social sharing' },
+      { type: 'added', description: 'Sitemap.xml and robots.txt for SEO' },
+      { type: 'added', description: 'View counter for articles and projects' },
+      { type: 'added', description: 'Custom 500 error page' },
+      { type: 'added', description: 'Reading progress indicator' },
+      { type: 'added', description: 'Interactive code blocks with copy button' },
+      { type: 'added', description: 'Related posts component' },
+      { type: 'added', description: 'Skills radar chart visualization' },
+      { type: 'added', description: 'Web Vitals performance monitoring' },
+      { type: 'added', description: 'Testimonials section' },
+      { type: 'added', description: 'Project status badges' },
+      { type: 'improved', description: 'Enhanced SEO with structured metadata' },
+    ],
+  },
+  {
     version: '1.1.0',
     date: 'February 2026',
     type: 'minor',

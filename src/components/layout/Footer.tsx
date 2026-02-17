@@ -129,7 +129,7 @@ export function Footer() {
             © {currentYear} {resumeData.personal.name}. All rights reserved.
           </p>
           <p className="text-xs text-[var(--muted)]">
-            Built with Next.js • Deployed on Vercel
+            Designed & built by Kumlesh Kumar
           </p>
         </div>
       </div>
